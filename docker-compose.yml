@@ -1,0 +1,48 @@
+version: "3"
+
+services: 
+
+    srv-master:
+        container_name: consul-srv-master
+        image: consul:latest
+        command: consul agent -server -bootstrap-expect=3 -ui -node=srv-master -client=0.0.0.0 -config-dir=/consul/config
+        restart: always
+        ports: 
+            - 8500:8500
+        volumes:
+            - ${SERVER}:/consul/data
+        networks: 
+            - cluster
+
+    server2:
+        container_name: consul-server2
+        image: consul:latest
+        command: consul agent -server -bootstrap-expect=3 -ui -node=server2 -client=0.0.0.0 -config-dir=/consul/config
+        restart: always
+        ports: 
+            - 8500:8500
+        networks: 
+            - cluster
+
+    server3:
+        container_name: consul-server3
+        image: consul:latest
+        command: consul agent -server -bootstrap-expect=3 -ui -node=server3 -client=0.0.0.0 -config-dir=/consul/config
+        restart: always
+        ports: 
+            - 8500:8500
+        networks: 
+            - cluster
+
+    client-ui:
+        container_name: consul-client-ui
+        image: consul:latest
+        command: consul agent -retry-join=node1 -ui -node=client-ui -client=0.0.0.0 -config-dir=/consul/config
+        restart: always
+        ports: 
+            - 8500:8500
+        networks: 
+            - cluster
+
+networks:
+    cluster:
