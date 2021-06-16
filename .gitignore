@@ -1,0 +1,11 @@
+### env ###
+.env
+
+### IntelliJ IDEA ###
+.idea
+
+### VS Code ###
+.vscode/
+
+## 日志文件
+.DS_Store

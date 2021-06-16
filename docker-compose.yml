@@ -2,47 +2,60 @@ version: "3"
 
 services: 
 
-    srv-master:
-        container_name: consul-srv-master
+    srv1:
+        container_name: consul-srv1
         image: consul:latest
-        command: consul agent -server -bootstrap-expect=3 -ui -node=srv-master -client=0.0.0.0 -config-dir=/consul/config
+        command: consul agent -node=srv1 -server -bootstrap -client=0.0.0.0 -data-dir=/consul/data -datacenter=${DATA_CENTER_NAME}
         restart: always
-        ports: 
-            - 8500:8500
         volumes:
-            - ${SERVER}:/consul/data
+            - ${SERVER_1_DATA}:/consul/data
+            - ${SERVER_1_CONFIG}:/consul/config
         networks: 
-            - cluster
+            - console-cluster
+        environment:
+            - 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}'
+            - CONSUL_BIND_INTERFACE=eth0
 
-    server2:
-        container_name: consul-server2
+    srv2:
+        container_name: consul-srv2
         image: consul:latest
-        command: consul agent -server -bootstrap-expect=3 -ui -node=server2 -client=0.0.0.0 -config-dir=/consul/config
+        command: consul agent -node=srv2 -server -retry-join=srv1 -client=0.0.0.0 -data-dir=/consul/data -datacenter=${DATA_CENTER_NAME}
+        restart: always
+        volumes:
+            - ${SERVER_2_DATA}:/consul/data
+            - ${SERVER_2_CONFIG}:/consul/config
+        networks: 
+            - console-cluster
+        environment:
+            - 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}'
+            - CONSUL_BIND_INTERFACE=eth0
+
+    srv3:
+        container_name: consul-srv3
+        image: consul:latest
+        command: consul agent -node=srv3 -server -retry-join=srv1 -client=0.0.0.0 -data-dir=/consul/data -datacenter=${DATA_CENTER_NAME}
+        restart: always
+        volumes:
+            - ${SERVER_3_DATA}:/consul/data
+            - ${SERVER_3_CONFIG}:/consul/config
+        networks: 
+            - console-cluster
+        environment:
+            - 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}'
+            - CONSUL_BIND_INTERFACE=eth0
+
+    ui:
+        container_name: consul-ui
+        image: consul:latest
+        command: consul agent -node=ui -retry-join=srv1 -client=0.0.0.0 -ui -data-dir=/consul/data -datacenter=${DATA_CENTER_NAME}
         restart: always
         ports: 
-            - 8500:8500
+            - ${UI_PORT}:8500
         networks: 
-            - cluster
-
-    server3:
-        container_name: consul-server3
-        image: consul:latest
-        command: consul agent -server -bootstrap-expect=3 -ui -node=server3 -client=0.0.0.0 -config-dir=/consul/config
-        restart: always
-        ports: 
-            - 8500:8500
-        networks: 
-            - cluster
-
-    client-ui:
-        container_name: consul-client-ui
-        image: consul:latest
-        command: consul agent -retry-join=node1 -ui -node=client-ui -client=0.0.0.0 -config-dir=/consul/config
-        restart: always
-        ports: 
-            - 8500:8500
-        networks: 
-            - cluster
+            - console-cluster
+        environment:
+            - 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}'
+            - CONSUL_BIND_INTERFACE=eth0
 
 networks:
-    cluster:
+    console-cluster:
